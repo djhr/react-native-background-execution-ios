@@ -5,11 +5,35 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { NativeModules, NativeEventEmitter } from 'react-native';
+import { NativeModules } from 'react-native';
 
 const NativeModule = NativeModules.BackgroundExecutionIOS;
 
-const Emitter = new NativeEventEmitter(NativeModule);
-
 export default class BackgroundExecutionIOS {
+
+    // consts
+
+    static BackgroundTaskInvalid = NativeModule.BackgroundTaskInvalid;
+
+
+    // getters & setters
+
+    static get backgroundTimeRemaining() {
+        return NativeModule.backgroundTimeRemaining();
+    }
+
+
+    // methods
+
+    static beginBackgroundTask(expirationHandler, name) {
+        if (typeof(expirationHandler) !== 'function') throw new TypeError('expirationHandler');
+
+        return NativeModule.beginBackgroundTask(expirationHandler, name);
+    }
+
+    static endBackgroundTask(identifier) {
+        if (typeof(identifier) !== 'number') throw new TypeError('Invalid identifier');
+
+        NativeModule.endBackgroundTask(identifier);
+    }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "react-native-background-execution-ios",
+  "description": "React Native Background Execution Management for iOS",
+  "author": "Daniel Rosa <daniel.rosa@tecnico.ulisboa.pt>",
+  "version": "0.0.1",
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/djhr/react-native-background-execution-ios"
+  },
+  "keywords": [
+    "react-native-background-execution-ios",
+    "react-native-background-execution",
+    "react",
+    "react-native",
+    "background",
+    "execution",
+    "task"
+  ]
+}

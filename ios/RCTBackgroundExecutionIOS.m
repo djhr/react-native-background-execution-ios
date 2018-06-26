@@ -13,8 +13,10 @@
 
 @implementation RCTBackgroundExecutionIOS
 
+NSString *const BACKGROUND_NOT_AVAILABLE = @"Running in the background is not possible.";
 UIBackgroundTaskIdentifier taskId;
-void (^onExpiration)(void);
+RCTResponseSenderBlock onExpiration;
+RCTResponseSenderBlock onError;
 
 
 #pragma mark Lifecycle
@@ -22,46 +24,60 @@ void (^onExpiration)(void);
 - (id)init
 {
   self = [super init];
-  
+
   if (self != nil) {
     taskId = UIBackgroundTaskInvalid;
     onExpiration = nil;
+    onError = nil;
   }
-  
+
   return self;
 }
 
 - (void)dealloc
 {
   if (taskId == UIBackgroundTaskInvalid) return;
-  
-  [self endBackgroundTask];
+
+  [self endBgTask];
 }
 
 
 #pragma mark Private API
 
-- (void) beginBackgroundTask
+- (void) beginBgTask
 {
   if (taskId == UIBackgroundTaskInvalid) {
     taskId = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
-      if (onExpiration != nil) onExpiration();
-      [self endBackgroundTask];
+      if (onExpiration != nil) onExpiration(@[@(UIApplication.sharedApplication.backgroundTimeRemaining)]);
+      [self endBgTask];
     }];
+
+    if (taskId == UIBackgroundTaskInvalid) [self beginBgTaskDidFail];
   } else {
     RCTLogWarn(@"Background task already running.");
   }
 }
 
-- (void) endBackgroundTask
+- (void) endBgTask
 {
   if (taskId != UIBackgroundTaskInvalid) {
     [UIApplication.sharedApplication endBackgroundTask: taskId];
+
     taskId = UIBackgroundTaskInvalid;
     onExpiration = nil;
+    onError = nil;
   } else {
     RCTLogWarn(@"No background task running.");
   }
+}
+
+- (void) beginBgTaskDidFail
+{
+  RCTLogWarn(BACKGROUND_NOT_AVAILABLE);
+  if (onError != nil) onError(@[BACKGROUND_NOT_AVAILABLE]);
+
+  onExpiration = nil;
+  onError = nil;
 }
 
 
@@ -77,21 +93,22 @@ RCT_EXPORT_MODULE()
 RCT_EXPORT_METHOD(backgroundTimeRemaining:(RCTPromiseResolveBlock) resolve
                              withRejecter:(RCTPromiseRejectBlock) reject)
 {
-  resolve(@(UIApplication.sharedApplication.backgroundTimeRemaining));
+  dispatch_async(dispatch_get_main_queue(), ^{
+    resolve(@(UIApplication.sharedApplication.backgroundTimeRemaining));
+  });
 }
 
-RCT_EXPORT_METHOD(beginBackgroundTask:(RCTResponseSenderBlock) expirationHandler)
+RCT_EXPORT_METHOD(beginBackgroundTask:(RCTResponseSenderBlock) callback
+                                error:(RCTResponseSenderBlock) error)
 {
-  self.onExpiration = ^{
-    expirationHandler(@[]);
-  };
-
-  [self beginBackgroundTask];
+  onExpiration = callback;
+  onError = error;
+  [self beginBgTask];
 }
 
 RCT_EXPORT_METHOD(endBackgroundTask)
 {
-  [self endBackgroundTask];
+  [self endBgTask];
 }
 
 @end

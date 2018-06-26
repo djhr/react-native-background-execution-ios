@@ -11,6 +11,9 @@ const NativeModule = NativeModules.BackgroundExecutionIOS;
 
 export default class BackgroundExecutionIOS {
 
+    static noop = () => {};
+
+
     // getters & setters
 
     static get backgroundTimeRemaining() {
@@ -20,8 +23,11 @@ export default class BackgroundExecutionIOS {
 
     // methods
 
-    static beginBackgroundTask(expirationHandler) {
-        return NativeModule.beginBackgroundTask(expirationHandler);
+    static beginBackgroundTask(onExpiration, onError) {
+        if (typeof(onExpiration) !== 'function') onExpiration = BackgroundExecutionIOS.noop;
+        if (typeof(onError) !== 'function') onError = BackgroundExecutionIOS.noop;
+
+        return NativeModule.beginBackgroundTask(onExpiration, onError);
     }
 
     static endBackgroundTask() {

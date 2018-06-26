@@ -11,11 +11,6 @@ const NativeModule = NativeModules.BackgroundExecutionIOS;
 
 export default class BackgroundExecutionIOS {
 
-    // consts
-
-    static BackgroundTaskInvalid = NativeModule.BackgroundTaskInvalid;
-
-
     // getters & setters
 
     static get backgroundTimeRemaining() {
@@ -25,15 +20,11 @@ export default class BackgroundExecutionIOS {
 
     // methods
 
-    static beginBackgroundTask(expirationHandler, name) {
-        if (typeof(expirationHandler) !== 'function') throw new TypeError('expirationHandler');
-
-        return NativeModule.beginBackgroundTask(expirationHandler, name);
+    static beginBackgroundTask(expirationHandler) {
+        return NativeModule.beginBackgroundTask(expirationHandler);
     }
 
-    static endBackgroundTask(identifier) {
-        if (typeof(identifier) !== 'number') throw new TypeError('Invalid identifier');
-
-        NativeModule.endBackgroundTask(identifier);
+    static endBackgroundTask() {
+        NativeModule.endBackgroundTask();
     }
 }

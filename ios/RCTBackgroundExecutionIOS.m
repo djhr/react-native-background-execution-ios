@@ -8,21 +8,64 @@
 #import "RCTBackgroundExecutionIOS.h"
 
 #import <UIKit/UIKit.h>
-
-#import <React/RCTConvert.h>
-
-
-@implementation RCTConvert (RCTBackgroundExecutionIOS)
-
-+ (UIBackgroundTaskIdentifier)UIBackgroundTaskIdentifier:(id)json
-{
-  return [RCTConvert uint64_t:json];
-}
-
-@end
+#import <React/RCTLog.h>
 
 
 @implementation RCTBackgroundExecutionIOS
+
+UIBackgroundTaskIdentifier taskId;
+void (^onExpiration)(void);
+
+
+#pragma mark Lifecycle
+
+- (id)init
+{
+  self = [super init];
+  
+  if (self != nil) {
+    taskId = UIBackgroundTaskInvalid;
+    onExpiration = nil;
+  }
+  
+  return self;
+}
+
+- (void)dealloc
+{
+  if (taskId == UIBackgroundTaskInvalid) return;
+  
+  [self endBackgroundTask];
+}
+
+
+#pragma mark Private API
+
+- (void) beginBackgroundTask
+{
+  if (taskId == UIBackgroundTaskInvalid) {
+    taskId = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
+      if (onExpiration != nil) onExpiration();
+      [self endBackgroundTask];
+    }];
+  } else {
+    RCTLogWarn(@"Background task already running.");
+  }
+}
+
+- (void) endBackgroundTask
+{
+  if (taskId != UIBackgroundTaskInvalid) {
+    [UIApplication.sharedApplication endBackgroundTask: taskId];
+    taskId = UIBackgroundTaskInvalid;
+    onExpiration = nil;
+  } else {
+    RCTLogWarn(@"No background task running.");
+  }
+}
+
+
+#pragma mark API
 
 RCT_EXPORT_MODULE()
 
@@ -31,35 +74,24 @@ RCT_EXPORT_MODULE()
   return NO;
 }
 
-- (NSDictionary *)constantsToExport
-{
-  return @{
-           @"BackgroundTaskInvalid": @(UIBackgroundTaskInvalid)
-           };
-}
-
 RCT_EXPORT_METHOD(backgroundTimeRemaining:(RCTPromiseResolveBlock) resolve
                              withRejecter:(RCTPromiseRejectBlock) reject)
 {
   resolve(@(UIApplication.sharedApplication.backgroundTimeRemaining));
 }
 
-RCT_EXPORT_METHOD(beginBackgroundTask:(RCTResponseSenderBlock) expirationHandler
-                             withName:(NSString) *taskName
-                         withResolver:(RCTPromiseResolveBlock) resolve
-                         withRejecter:(RCTPromiseRejectBlock) reject)
+RCT_EXPORT_METHOD(beginBackgroundTask:(RCTResponseSenderBlock) expirationHandler)
 {
-  UIBackgroundTaskIdentifier identifier = name == nil
-    ? [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler: expirationHandler]
-    : [UIApplication.sharedApplication beginBackgroundTaskWithName: taskName
-                                                 expirationHandler: expirationHandler];
-  
-  resolve(@(identifier));
+  self.onExpiration = ^{
+    expirationHandler(@[]);
+  };
+
+  [self beginBackgroundTask];
 }
 
-RCT_EXPORT_METHOD(endBackgroundTask:(UIBackgroundTaskIdentifier) identifier)
+RCT_EXPORT_METHOD(endBackgroundTask)
 {
-  [UIApplication.sharedApplication endBackgroundTask: identifier];
+  [self endBackgroundTask];
 }
 
 @end

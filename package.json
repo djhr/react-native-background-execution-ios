@@ -2,7 +2,7 @@
   "name": "react-native-background-execution-ios",
   "description": "React Native Background Execution Management for iOS",
   "author": "Daniel Rosa <daniel.rosa@tecnico.ulisboa.pt>",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "MIT",
   "main": "index.js",
   "repository": {

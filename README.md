@@ -21,13 +21,12 @@ import BackgroundExecutionIOS from 'react-native-background-execution-ios';
 const onExpiration = (remainingTime) => console.info(`Background execution time will end in ${remainingTime}s`);
 const onError = (err) => console.warn(err);
 
-const backgroundTimeRemaining = await BackgroundExecutionIOS.backgroundTimeRemaining;
-
-if (backgroundTimeRemaining > 0) {
-    BackgroundExecutionIOS.beginBackgroundTask(onExpiration, onError);
-    //...
-    BackgroundExecutionIOS.endBackgroundTask();
-}
+BackgroundExecutionIOS.beginBackgroundTask(onExpiration, onError);
+//...
+const remainingTime = await BackgroundExecutionIOS.backgroundTimeRemaining;
+console.log(`Remaining background time: ${remainingTime}s`);
+//...
+BackgroundExecutionIOS.endBackgroundTask();
 ```
 
 ## API
